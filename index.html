@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>كاشف الأخبار الكاذبة - AraBERT</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .model-badge {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #4caf50, #8bc34a);
+            color: white;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            transition: border 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            margin-top: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+        }
+
+        .result.fake {
+            background: #fee;
+            border: 2px solid #f44336;
+        }
+
+        .result.real {
+            background: #efe;
+            border: 2px solid #4caf50;
+        }
+
+        .result-label {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .result.fake .result-label {
+            color: #f44336;
+        }
+
+        .result.real .result-label {
+            color: #4caf50;
+        }
+
+        .confidence {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .progress-container {
+            width: 100%;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            height: 25px;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.6s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .progress-bar.fake {
+            background: linear-gradient(90deg, #f44336, #e91e63);
+        }
+
+        .progress-bar.real {
+            background: linear-gradient(90deg, #4caf50, #8bc34a);
+        }
+
+        .loader {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .examples {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 10px;
+        }
+
+        .examples h3 {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .example-btn {
+            display: inline-block;
+            padding: 8px 15px;
+            margin: 5px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .example-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 كاشف الأخبار الكاذبة</h1>
+        <p class="subtitle">نظام ذكاء صنعي للكشف عن الأخبار المضللة باللغة العربية على منصة X "تويتر سابقا"</p>
+        <div class="model-badge">
+            <span class="badge">🤖 AraBERT — دقة عالية لفهم السياق و المعنى</span>
+        </div>
+
+        <textarea id="newsText" placeholder="اكتب أو الصق الخبر هنا..."></textarea>
+
+        <div class="examples">
+            <h3>أمثلة سريعة:</h3>
+            <span class="example-btn" onclick="setExample('🚨 اكتشاف علاج نهائي للزكام خلال 3 أيام فقط باستخدام الأعشاب الطبيعية 🌿🤯#الزكام #الأعشاب_الطبيعية #صحة #علاج')">علاج الزكام</span>
+            <span class="example-btn" onclick="setExample('وزارة الصحة تعلن رسميًا عن إطلاق حملة تطعيم مجانية للأطفال  🩺💉#وزارة_الصحة #تطعيم #صحة #أطفال')">حملة تطعيم</span>
+            <span class="example-btn" onclick="setExample('🚨 تسريب وثائق سرية يثير الجدل حول مخطط عالمي لتسميم مصادر المياه 😳💧#وثائق_سرية #مياه #عاجل')">مؤامرة</span>
+            <span class="example-btn" onclick="setExample('البرلمان يصوّت على قانون جديد لتنظيم استخدامات الذكاء الاصطناعي 🤖🏛️#الذكاء_الاصطناعي #البرلمان #قانون #تقنية')">قانون جديد</span>
+        </div>
+
+        <button onclick="checkNews()">تحليل الخبر</button>
+
+        <div class="loader" id="loader">
+            <div class="spinner"></div>
+        </div>
+
+        <div class="result" id="result">
+            <div class="result-label" id="resultLabel"></div>
+            <div class="confidence" id="confidence"></div>
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function setExample(text) {
+            document.getElementById('newsText').value = text;
+        }
+
+        async function checkNews() {
+            const text = document.getElementById('newsText').value.trim();
+
+            if (!text) {
+                alert('الرجاء كتابة نص الخبر');
+                return;
+            }
+
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('loader').style.display = 'block';
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text: text })
+                });
+
+                const data = await response.json();
+
+                document.getElementById('loader').style.display = 'none';
+
+                const resultDiv = document.getElementById('result');
+                const resultLabel = document.getElementById('resultLabel');
+                const confidence = document.getElementById('confidence');
+                const progressBar = document.getElementById('progressBar');
+
+                const confValue = data.confidence.toFixed(1);
+
+                if (data.label === 1) {
+                    resultDiv.className = 'result fake';
+                    resultLabel.textContent = '🔴 خبر كاذب';
+                    progressBar.className = 'progress-bar fake';
+                } else {
+                    resultDiv.className = 'result real';
+                    resultLabel.textContent = '🟢 خبر صادق';
+                    progressBar.className = 'progress-bar real';
+                }
+
+                confidence.textContent = `نسبة الثقة: ${confValue}%`;
+                progressBar.style.width = confValue + '%';
+                progressBar.textContent = confValue + '%';
+
+                resultDiv.style.display = 'block';
+
+            } catch (error) {
+                document.getElementById('loader').style.display = 'none';
+                alert('حدث خطأ في الاتصال بالخادم');
+                console.error(error);
+            }
+        }
+
+        document.getElementById('newsText').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                checkNews();
+            }
+        });
+    </script>
+</body>
+</html>
